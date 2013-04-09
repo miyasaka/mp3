@@ -1,4 +1,4 @@
 mp3
 ===
 
-nalyze MP3 header
+Analyze MP3 header
