@@ -1,0 +1,88 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <errno.h>
+#include "postgres.h"
+#include "libpq-fe.h" 
+
+int main(int argc,char **argv)
+{
+
+    	char dbName[] = "komimi";
+    	char loginName[] = "kokuyo";
+    	char password[] = "kokuyo";
+    	char sql[255];
+    	int i;
+    	PGconn *con;
+    	PGresult *res;
+    	char *row1;
+
+    /* DBとの接続 */
+    	con = PQsetdbLogin(
+          	NULL,
+          	NULL,
+          	NULL,
+          	NULL,
+          	dbName,  // db name
+          	loginName,  // login name
+          	password); // password
+    	if ( PQstatus(con) == CONNECTION_BAD ) { /* 接続が失敗したときのエラー処理 */
+        	fprintf(stderr,"Connection to database '%s' failed.\n",dbName);
+        	fprintf(stderr,"%s",PQerrorMessage(con));
+        	exit(1);
+    	}
+
+    	/* select文の発行 */
+    	sprintf(sql,"set search_path to mp3_test");
+    	res = PQexec(con,sql);
+    	if (PQresultStatus(res) != PGRES_COMMAND_OK) {
+        	fprintf(stderr,"%s",PQerrorMessage(con));
+		PQclear(res);
+    		PQfinish(con);
+        	exit(1);
+    	}
+	PQclear(res);
+
+	res = PQexec(con,"BEGIN");
+    	if (PQresultStatus(res) != PGRES_COMMAND_OK) {
+        	fprintf(stderr,"%s",PQerrorMessage(con));
+		PQclear(res);
+    		PQfinish(con);
+        	exit(1);
+    	}
+	PQclear(res);
+
+	res = PQexec(con,"DECLARE mysongs CURSOR FOR select * from mp3_test");
+    	if (PQresultStatus(res) != PGRES_COMMAND_OK) {
+        	fprintf(stderr,"%s",PQerrorMessage(con));
+		PQclear(res);
+    		PQfinish(con);
+        	exit(1);
+    	}
+	PQclear(res);
+
+    	res = PQexec(con,"FETCH ALL in mysongs");
+    	if (PQresultStatus(res) != PGRES_TUPLES_OK) {
+        	fprintf(stderr,"%s",PQerrorMessage(con));
+		PQclear(res);
+    		PQfinish(con);
+        	exit(1);
+    	}
+
+   	fprintf(stdout,"Songs\n");
+    	fprintf(stdout,"--------------------------------------\n");
+    	for(i = 0; i < PQntuples(res) ;i++) {
+        	fprintf(stdout,"[%s]\n",PQgetvalue(res,i,0));
+    	}
+    	PQclear(res);
+
+	res = PQexec(con,"CLOSE mysongs");
+    	PQclear(res);
+
+	res = PQexec(con,"END");
+    	PQclear(res);
+
+    	PQfinish(con);
+
+	return(0);
+}  
