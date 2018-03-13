@@ -99,7 +99,7 @@ InsertPostgres(ID3V2_20_TAG *id3v220tag, BIT_RATE_INFO *bitrate, char *mp3_file)
 	sprintf(sql,"select seq_no from album where album = '%s' and artist = '%s'",album,artist);
 		
 #ifdef D_DEBUG
-fprintf(stdout,"[%s]\n",sql);
+fprintf(stderr,"[%s]\n",sql);
 #endif
 	res = PQexec(con,sql);
     	if (PQresultStatus(res) != PGRES_TUPLES_OK) {
